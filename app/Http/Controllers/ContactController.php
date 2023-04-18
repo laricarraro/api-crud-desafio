@@ -12,7 +12,7 @@ class ContactController extends Controller
     {
         $this->model = $contact;
     }
-   
+
     /**
      * Display a listing of the resource.
      */
@@ -20,11 +20,11 @@ class ContactController extends Controller
     {
         $resultsPerPage = 10;
         $query = $this->model->query();
-    
+
         if ($request->has('data_inicial') && $request->has('data_final')) {
             $query->whereBetween('created_at', [$request->input('data_inicial'), $request->input('data_final')]);
         }
-    
+
         $data = $query->paginate($resultsPerPage);
         return response($data);
     }
@@ -41,9 +41,13 @@ class ContactController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
+    {    
+        $cpf = preg_replace("/[^0-9]/", "", $request->input('cpf'));
+        if (strlen($cpf) != 11 || !is_numeric($cpf)) {
+            return response()->json(['error' => 'CPF inválido'], 422);
+        }
         try {
-             $this->model->create($request->all());
+            $this->model->create($request->all());
             return response()->json(['message' => 'Cadastro realizado com sucesso!']);
         } catch (\Throwable $th) {
             throw $th;
@@ -64,8 +68,7 @@ class ContactController extends Controller
     public function edit(string $id)
     {
         $contact = $this->model->find($id);
-        if(!$contact)
-        {
+        if (!$contact) {
             return response('Contact not found');
         }
         return response(['contact' => $contact]);
@@ -77,15 +80,13 @@ class ContactController extends Controller
     public function update(Request $request, string $id)
     {
         $contact = $this->model->find($id);
-        if(!$contact)
-        {
+        if (!$contact) {
             return response(['errors' => 'Contato não encontrado'], 404);
         }
 
         $contact->fill($request->all());
 
-        if($contact->save())
-        {
+        if ($contact->save()) {
             return response(['message' => 'Contato atualizado com sucesso!']);
         }
 
@@ -99,16 +100,15 @@ class ContactController extends Controller
     public function destroy(string $id)
     {
         $contact = $this->model->find($id);
-        if(!$contact)
-        {
+        if (!$contact) {
             return response(['errors' => 'Contato não encontrado'], 404);
         }
-    
-        try{
+
+        try {
             $contact->delete();
             return response(['message' => 'Contato excluído com sucesso']);
-        } catch (\Throwable $th){
+        } catch (\Throwable $th) {
             throw $th;
         }
-    }   
+    }
 }
